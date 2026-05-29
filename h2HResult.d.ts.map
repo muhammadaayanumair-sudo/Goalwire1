@@ -1,0 +1,1 @@
+{"version":3,"file":"h2HResult.d.ts","sourceRoot":"","sources":["../../../src/generated/types/h2HResult.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AACH,OAAO,KAAK,EAAE,mBAAmB,EAAE,MAAM,uBAAuB,CAAC;AACjE,OAAO,KAAK,EAAE,KAAK,EAAE,MAAM,SAAS,CAAC;AAErC,MAAM,WAAW,SAAS;IACxB,UAAU,EAAE,mBAAmB,CAAC;IAChC,OAAO,EAAE,KAAK,EAAE,CAAC;CAClB"}

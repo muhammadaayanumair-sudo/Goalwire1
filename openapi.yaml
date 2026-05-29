@@ -1,0 +1,500 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: GoalWire Football API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: football
+    description: Football data endpoints
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /football/live:
+    get:
+      operationId: getLiveMatches
+      tags: [football]
+      summary: Get live matches
+      responses:
+        "200":
+          description: Live matches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /football/scores:
+    get:
+      operationId: getScores
+      tags: [football]
+      summary: Get scores for a date
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Date in YYYY-MM-DD format (defaults to today)
+      responses:
+        "200":
+          description: Matches for date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /football/standings:
+    get:
+      operationId: getStandings
+      tags: [football]
+      summary: Get league standings
+      parameters:
+        - name: league
+          in: query
+          required: true
+          schema:
+            type: string
+          description: League code (e.g. PL, BL1, PD)
+      responses:
+        "200":
+          description: Standings table
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Standing"
+
+  /football/top-scorers:
+    get:
+      operationId: getTopScorers
+      tags: [football]
+      summary: Get top scorers for a league
+      parameters:
+        - name: league
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Top scorers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Scorer"
+
+  /football/news:
+    get:
+      operationId: getNews
+      tags: [football]
+      summary: Get latest football news
+      responses:
+        "200":
+          description: News articles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsArticle"
+
+  /football/team:
+    get:
+      operationId: getTeam
+      tags: [football]
+      summary: Search for a team
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Team info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamDetail"
+
+  /football/fixtures:
+    get:
+      operationId: getFixtures
+      tags: [football]
+      summary: Get upcoming fixtures for a team
+      parameters:
+        - name: teamId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Upcoming fixtures
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /football/match/{id}:
+    get:
+      operationId: getMatch
+      tags: [football]
+      summary: Get full match details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MatchDetail"
+        "404":
+          description: Not found
+
+  /football/match/{id}/h2h:
+    get:
+      operationId: getMatchH2H
+      tags: [football]
+      summary: Get head-to-head stats for a match
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Head-to-head stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/H2HResult"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    Match:
+      type: object
+      required: [id, utcDate, status, homeTeam, awayTeam, score, competition]
+      properties:
+        id:
+          type: integer
+        utcDate:
+          type: string
+        status:
+          type: string
+        matchday:
+          type: ["integer", "null"]
+        stage:
+          type: string
+        minute:
+          type: ["integer", "null"]
+        injuryTime:
+          type: ["integer", "null"]
+        competition:
+          $ref: "#/components/schemas/CompetitionRef"
+        homeTeam:
+          $ref: "#/components/schemas/TeamRef"
+        awayTeam:
+          $ref: "#/components/schemas/TeamRef"
+        score:
+          $ref: "#/components/schemas/Score"
+
+    CompetitionRef:
+      type: object
+      required: [id, name, code]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+
+    TeamRef:
+      type: object
+      required: [id, name, shortName, tla]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        shortName:
+          type: string
+        tla:
+          type: string
+
+    Score:
+      type: object
+      required: [fullTime, halfTime]
+      properties:
+        winner:
+          type: ["string", "null"]
+        duration:
+          type: string
+        fullTime:
+          $ref: "#/components/schemas/ScoreDetail"
+        halfTime:
+          $ref: "#/components/schemas/ScoreDetail"
+
+    ScoreDetail:
+      type: object
+      properties:
+        home:
+          type: ["integer", "null"]
+        away:
+          type: ["integer", "null"]
+
+    Standing:
+      type: object
+      required: [position, team, playedGames, won, draw, lost, points, goalsFor, goalsAgainst, goalDifference]
+      properties:
+        position:
+          type: integer
+        team:
+          $ref: "#/components/schemas/TeamRef"
+        playedGames:
+          type: integer
+        won:
+          type: integer
+        draw:
+          type: integer
+        lost:
+          type: integer
+        points:
+          type: integer
+        goalsFor:
+          type: integer
+        goalsAgainst:
+          type: integer
+        goalDifference:
+          type: integer
+
+    Scorer:
+      type: object
+      required: [player, team, goals]
+      properties:
+        player:
+          type: object
+          required: [name, nationality]
+          properties:
+            name:
+              type: string
+            nationality:
+              type: string
+        team:
+          type: object
+          required: [name]
+          properties:
+            name:
+              type: string
+        goals:
+          type: integer
+        assists:
+          type: ["integer", "null"]
+        penalties:
+          type: ["integer", "null"]
+
+    NewsArticle:
+      type: object
+      required: [title, link, description, pubDate]
+      properties:
+        title:
+          type: string
+        link:
+          type: string
+        description:
+          type: string
+        pubDate:
+          type: string
+
+    TeamDetail:
+      type: object
+      required: [id, name, shortName, tla, crest]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        shortName:
+          type: string
+        tla:
+          type: string
+        crest:
+          type: string
+        website:
+          type: ["string", "null"]
+        founded:
+          type: ["integer", "null"]
+        clubColors:
+          type: ["string", "null"]
+        venue:
+          type: ["string", "null"]
+        runningCompetitions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompetitionRef"
+        squad:
+          type: array
+          items:
+            $ref: "#/components/schemas/SquadMember"
+
+    SquadMember:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        position:
+          type: ["string", "null"]
+        nationality:
+          type: string
+
+    GoalEvent:
+      type: object
+      required: [minute, team, scorer]
+      properties:
+        minute:
+          type: integer
+        injuryTime:
+          type: ["integer", "null"]
+        team:
+          type: string
+        scorer:
+          type: string
+        assist:
+          type: ["string", "null"]
+        type:
+          type: string
+
+    MatchDetail:
+      type: object
+      required: [id, utcDate, status, homeTeam, awayTeam, score, competition]
+      properties:
+        id:
+          type: integer
+        utcDate:
+          type: string
+        status:
+          type: string
+        matchday:
+          type: ["integer", "null"]
+        stage:
+          type: string
+        minute:
+          type: ["integer", "null"]
+        injuryTime:
+          type: ["integer", "null"]
+        competition:
+          $ref: "#/components/schemas/CompetitionRef"
+        homeTeam:
+          $ref: "#/components/schemas/TeamRef"
+        awayTeam:
+          $ref: "#/components/schemas/TeamRef"
+        score:
+          $ref: "#/components/schemas/Score"
+        goals:
+          type: array
+          items:
+            $ref: "#/components/schemas/GoalEvent"
+        referees:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              nationality:
+                type: ["string", "null"]
+
+    H2HResult:
+      type: object
+      required: [aggregates, matches]
+      properties:
+        aggregates:
+          type: object
+          properties:
+            numberOfMatches:
+              type: integer
+            totalGoals:
+              type: integer
+            homeTeam:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                wins:
+                  type: integer
+                draws:
+                  type: integer
+                losses:
+                  type: integer
+            awayTeam:
+              type: object
+              properties:
+                id:
+                  type: integer
+                name:
+                  type: string
+                wins:
+                  type: integer
+                draws:
+                  type: integer
+                losses:
+                  type: integer
+        matches:
+          type: array
+          items:
+            $ref: "#/components/schemas/Match"
