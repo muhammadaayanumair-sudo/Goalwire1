@@ -5,859 +5,377 @@
  * GoalWire Football API
  * OpenAPI spec version: 0.1.0
  */
-import {
-  useQuery
-} from '@tanstack/react-query';
-import type {
-  QueryFunction,
-  QueryKey,
-  UseQueryOptions,
-  UseQueryResult
-} from '@tanstack/react-query';
-
-import type {
-  GetFixturesParams,
-  GetMatchH2HParams,
-  GetScoresParams,
-  GetStandingsParams,
-  GetTeamParams,
-  GetTopScorersParams,
-  H2HResult,
-  HealthStatus,
-  Match,
-  MatchDetail,
-  NewsArticle,
-  Scorer,
-  Standing,
-  TeamDetail
-} from './api.schemas';
-
-import { customFetch } from '../custom-fetch';
-import type { ErrorType } from '../custom-fetch';
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-      type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
-
-type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
-
-
-
-export const getHealthCheckUrl = () => {
-
-
-
-
-  return `/api/healthz`
-}
-
-/**
- * @summary Health check
- */
-export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus> => {
-
-  return customFetch<HealthStatus>(getHealthCheckUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getHealthCheckQueryKey = () => {
-    return [
-    `/api/healthz`
-    ] as const;
-    }
-
-
-export const getHealthCheckQueryOptions = <TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getHealthCheckQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthCheck>>> = ({ signal }) => healthCheck({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type HealthCheckQueryResult = NonNullable<Awaited<ReturnType<typeof healthCheck>>>
-export type HealthCheckQueryError = ErrorType<unknown>
+import * as zod from 'zod';
 
 
 /**
  * @summary Health check
  */
-
-export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof healthCheck>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getHealthCheckQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetLiveMatchesUrl = () => {
-
-
-
-
-  return `/api/football/live`
-}
-
-/**
- * @summary Get live matches
- */
-export const getLiveMatches = async ( options?: RequestInit): Promise<Match[]> => {
-
-  return customFetch<Match[]>(getGetLiveMatchesUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetLiveMatchesQueryKey = () => {
-    return [
-    `/api/football/live`
-    ] as const;
-    }
-
-
-export const getGetLiveMatchesQueryOptions = <TData = Awaited<ReturnType<typeof getLiveMatches>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLiveMatches>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetLiveMatchesQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getLiveMatches>>> = ({ signal }) => getLiveMatches({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getLiveMatches>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetLiveMatchesQueryResult = NonNullable<Awaited<ReturnType<typeof getLiveMatches>>>
-export type GetLiveMatchesQueryError = ErrorType<unknown>
+export const HealthCheckResponse = zod.object({
+  "status": zod.string()
+})
 
 
 /**
  * @summary Get live matches
  */
-
-export function useGetLiveMatches<TData = Awaited<ReturnType<typeof getLiveMatches>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getLiveMatches>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetLiveMatchesQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetScoresUrl = (params?: GetScoresParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/football/scores?${stringifiedParams}` : `/api/football/scores`
-}
-
-/**
- * @summary Get scores for a date
- */
-export const getScores = async (params?: GetScoresParams, options?: RequestInit): Promise<Match[]> => {
-
-  return customFetch<Match[]>(getGetScoresUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetScoresQueryKey = (params?: GetScoresParams,) => {
-    return [
-    `/api/football/scores`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetScoresQueryOptions = <TData = Awaited<ReturnType<typeof getScores>>, TError = ErrorType<unknown>>(params?: GetScoresParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getScores>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetScoresQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getScores>>> = ({ signal }) => getScores(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getScores>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetScoresQueryResult = NonNullable<Awaited<ReturnType<typeof getScores>>>
-export type GetScoresQueryError = ErrorType<unknown>
+export const GetLiveMatchesResponseItem = zod.object({
+  "id": zod.number(),
+  "utcDate": zod.string(),
+  "status": zod.string(),
+  "matchday": zod.number().nullish(),
+  "stage": zod.string().optional(),
+  "minute": zod.number().nullish(),
+  "injuryTime": zod.number().nullish(),
+  "competition": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string()
+}),
+  "homeTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "awayTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "score": zod.object({
+  "winner": zod.string().nullish(),
+  "duration": zod.string().optional(),
+  "fullTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+}),
+  "halfTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+})
+})
+})
+export const GetLiveMatchesResponse = zod.array(GetLiveMatchesResponseItem)
 
 
 /**
  * @summary Get scores for a date
  */
+export const GetScoresQueryParams = zod.object({
+  "date": zod.coerce.string().optional().describe('Date in YYYY-MM-DD format (defaults to today)')
+})
 
-export function useGetScores<TData = Awaited<ReturnType<typeof getScores>>, TError = ErrorType<unknown>>(
- params?: GetScoresParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getScores>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetScoresQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetStandingsUrl = (params: GetStandingsParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/football/standings?${stringifiedParams}` : `/api/football/standings`
-}
-
-/**
- * @summary Get league standings
- */
-export const getStandings = async (params: GetStandingsParams, options?: RequestInit): Promise<Standing[]> => {
-
-  return customFetch<Standing[]>(getGetStandingsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetStandingsQueryKey = (params?: GetStandingsParams,) => {
-    return [
-    `/api/football/standings`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetStandingsQueryOptions = <TData = Awaited<ReturnType<typeof getStandings>>, TError = ErrorType<unknown>>(params: GetStandingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStandings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetStandingsQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStandings>>> = ({ signal }) => getStandings(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStandings>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetStandingsQueryResult = NonNullable<Awaited<ReturnType<typeof getStandings>>>
-export type GetStandingsQueryError = ErrorType<unknown>
+export const GetScoresResponseItem = zod.object({
+  "id": zod.number(),
+  "utcDate": zod.string(),
+  "status": zod.string(),
+  "matchday": zod.number().nullish(),
+  "stage": zod.string().optional(),
+  "minute": zod.number().nullish(),
+  "injuryTime": zod.number().nullish(),
+  "competition": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string()
+}),
+  "homeTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "awayTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "score": zod.object({
+  "winner": zod.string().nullish(),
+  "duration": zod.string().optional(),
+  "fullTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+}),
+  "halfTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+})
+})
+})
+export const GetScoresResponse = zod.array(GetScoresResponseItem)
 
 
 /**
  * @summary Get league standings
  */
+export const GetStandingsQueryParams = zod.object({
+  "league": zod.coerce.string().describe('League code (e.g. PL, BL1, PD)')
+})
 
-export function useGetStandings<TData = Awaited<ReturnType<typeof getStandings>>, TError = ErrorType<unknown>>(
- params: GetStandingsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStandings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetStandingsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetTopScorersUrl = (params: GetTopScorersParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/football/top-scorers?${stringifiedParams}` : `/api/football/top-scorers`
-}
-
-/**
- * @summary Get top scorers for a league
- */
-export const getTopScorers = async (params: GetTopScorersParams, options?: RequestInit): Promise<Scorer[]> => {
-
-  return customFetch<Scorer[]>(getGetTopScorersUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetTopScorersQueryKey = (params?: GetTopScorersParams,) => {
-    return [
-    `/api/football/top-scorers`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetTopScorersQueryOptions = <TData = Awaited<ReturnType<typeof getTopScorers>>, TError = ErrorType<unknown>>(params: GetTopScorersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTopScorers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetTopScorersQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTopScorers>>> = ({ signal }) => getTopScorers(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTopScorers>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetTopScorersQueryResult = NonNullable<Awaited<ReturnType<typeof getTopScorers>>>
-export type GetTopScorersQueryError = ErrorType<unknown>
+export const GetStandingsResponseItem = zod.object({
+  "position": zod.number(),
+  "team": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "playedGames": zod.number(),
+  "won": zod.number(),
+  "draw": zod.number(),
+  "lost": zod.number(),
+  "points": zod.number(),
+  "goalsFor": zod.number(),
+  "goalsAgainst": zod.number(),
+  "goalDifference": zod.number()
+})
+export const GetStandingsResponse = zod.array(GetStandingsResponseItem)
 
 
 /**
  * @summary Get top scorers for a league
  */
+export const GetTopScorersQueryParams = zod.object({
+  "league": zod.coerce.string(),
+  "limit": zod.coerce.number().optional()
+})
 
-export function useGetTopScorers<TData = Awaited<ReturnType<typeof getTopScorers>>, TError = ErrorType<unknown>>(
- params: GetTopScorersParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTopScorers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetTopScorersQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetNewsUrl = () => {
-
-
-
-
-  return `/api/football/news`
-}
-
-/**
- * @summary Get latest football news
- */
-export const getNews = async ( options?: RequestInit): Promise<NewsArticle[]> => {
-
-  return customFetch<NewsArticle[]>(getGetNewsUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetNewsQueryKey = () => {
-    return [
-    `/api/football/news`
-    ] as const;
-    }
-
-
-export const getGetNewsQueryOptions = <TData = Awaited<ReturnType<typeof getNews>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetNewsQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getNews>>> = ({ signal }) => getNews({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getNews>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetNewsQueryResult = NonNullable<Awaited<ReturnType<typeof getNews>>>
-export type GetNewsQueryError = ErrorType<unknown>
+export const GetTopScorersResponseItem = zod.object({
+  "player": zod.object({
+  "name": zod.string(),
+  "nationality": zod.string()
+}),
+  "team": zod.object({
+  "name": zod.string()
+}),
+  "goals": zod.number(),
+  "assists": zod.number().nullish(),
+  "penalties": zod.number().nullish()
+})
+export const GetTopScorersResponse = zod.array(GetTopScorersResponseItem)
 
 
 /**
  * @summary Get latest football news
  */
-
-export function useGetNews<TData = Awaited<ReturnType<typeof getNews>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getNews>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetNewsQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetTeamUrl = (params: GetTeamParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/football/team?${stringifiedParams}` : `/api/football/team`
-}
-
-/**
- * @summary Search for a team
- */
-export const getTeam = async (params: GetTeamParams, options?: RequestInit): Promise<TeamDetail> => {
-
-  return customFetch<TeamDetail>(getGetTeamUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetTeamQueryKey = (params?: GetTeamParams,) => {
-    return [
-    `/api/football/team`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetTeamQueryOptions = <TData = Awaited<ReturnType<typeof getTeam>>, TError = ErrorType<unknown>>(params: GetTeamParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeam>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetTeamQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTeam>>> = ({ signal }) => getTeam(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTeam>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetTeamQueryResult = NonNullable<Awaited<ReturnType<typeof getTeam>>>
-export type GetTeamQueryError = ErrorType<unknown>
+export const GetNewsResponseItem = zod.object({
+  "title": zod.string(),
+  "link": zod.string(),
+  "description": zod.string(),
+  "pubDate": zod.string()
+})
+export const GetNewsResponse = zod.array(GetNewsResponseItem)
 
 
 /**
  * @summary Search for a team
  */
+export const GetTeamQueryParams = zod.object({
+  "name": zod.coerce.string()
+})
 
-export function useGetTeam<TData = Awaited<ReturnType<typeof getTeam>>, TError = ErrorType<unknown>>(
- params: GetTeamParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTeam>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetTeamQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetFixturesUrl = (params: GetFixturesParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/football/fixtures?${stringifiedParams}` : `/api/football/fixtures`
-}
-
-/**
- * @summary Get upcoming fixtures for a team
- */
-export const getFixtures = async (params: GetFixturesParams, options?: RequestInit): Promise<Match[]> => {
-
-  return customFetch<Match[]>(getGetFixturesUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetFixturesQueryKey = (params?: GetFixturesParams,) => {
-    return [
-    `/api/football/fixtures`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetFixturesQueryOptions = <TData = Awaited<ReturnType<typeof getFixtures>>, TError = ErrorType<unknown>>(params: GetFixturesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFixtures>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetFixturesQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFixtures>>> = ({ signal }) => getFixtures(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFixtures>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetFixturesQueryResult = NonNullable<Awaited<ReturnType<typeof getFixtures>>>
-export type GetFixturesQueryError = ErrorType<unknown>
+export const GetTeamResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string(),
+  "crest": zod.string(),
+  "website": zod.string().nullish(),
+  "founded": zod.number().nullish(),
+  "clubColors": zod.string().nullish(),
+  "venue": zod.string().nullish(),
+  "runningCompetitions": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string()
+})).optional(),
+  "squad": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "position": zod.string().nullish(),
+  "nationality": zod.string().optional()
+})).optional()
+})
 
 
 /**
  * @summary Get upcoming fixtures for a team
  */
+export const GetFixturesQueryParams = zod.object({
+  "teamId": zod.coerce.number()
+})
 
-export function useGetFixtures<TData = Awaited<ReturnType<typeof getFixtures>>, TError = ErrorType<unknown>>(
- params: GetFixturesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFixtures>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetFixturesQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetMatchUrl = (id: number,) => {
-
-
-
-
-  return `/api/football/match/${id}`
-}
-
-/**
- * @summary Get full match details
- */
-export const getMatch = async (id: number, options?: RequestInit): Promise<MatchDetail> => {
-
-  return customFetch<MatchDetail>(getGetMatchUrl(id),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetMatchQueryKey = (id: number,) => {
-    return [
-    `/api/football/match/${id}`
-    ] as const;
-    }
-
-
-export const getGetMatchQueryOptions = <TData = Awaited<ReturnType<typeof getMatch>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMatch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetMatchQueryKey(id);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMatch>>> = ({ signal }) => getMatch(id, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMatch>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetMatchQueryResult = NonNullable<Awaited<ReturnType<typeof getMatch>>>
-export type GetMatchQueryError = ErrorType<void>
+export const GetFixturesResponseItem = zod.object({
+  "id": zod.number(),
+  "utcDate": zod.string(),
+  "status": zod.string(),
+  "matchday": zod.number().nullish(),
+  "stage": zod.string().optional(),
+  "minute": zod.number().nullish(),
+  "injuryTime": zod.number().nullish(),
+  "competition": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string()
+}),
+  "homeTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "awayTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "score": zod.object({
+  "winner": zod.string().nullish(),
+  "duration": zod.string().optional(),
+  "fullTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+}),
+  "halfTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+})
+})
+})
+export const GetFixturesResponse = zod.array(GetFixturesResponseItem)
 
 
 /**
  * @summary Get full match details
  */
+export const GetMatchParams = zod.object({
+  "id": zod.coerce.number()
+})
 
-export function useGetMatch<TData = Awaited<ReturnType<typeof getMatch>>, TError = ErrorType<void>>(
- id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMatch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetMatchQueryOptions(id,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-
-export const getGetMatchH2HUrl = (id: number,
-    params?: GetMatchH2HParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : value.toString())
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/football/match/${id}/h2h?${stringifiedParams}` : `/api/football/match/${id}/h2h`
-}
-
-/**
- * @summary Get head-to-head stats for a match
- */
-export const getMatchH2H = async (id: number,
-    params?: GetMatchH2HParams, options?: RequestInit): Promise<H2HResult> => {
-
-  return customFetch<H2HResult>(getGetMatchH2HUrl(id,params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetMatchH2HQueryKey = (id: number,
-    params?: GetMatchH2HParams,) => {
-    return [
-    `/api/football/match/${id}/h2h`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getGetMatchH2HQueryOptions = <TData = Awaited<ReturnType<typeof getMatchH2H>>, TError = ErrorType<unknown>>(id: number,
-    params?: GetMatchH2HParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMatchH2H>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetMatchH2HQueryKey(id,params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMatchH2H>>> = ({ signal }) => getMatchH2H(id,params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMatchH2H>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetMatchH2HQueryResult = NonNullable<Awaited<ReturnType<typeof getMatchH2H>>>
-export type GetMatchH2HQueryError = ErrorType<unknown>
+export const GetMatchResponse = zod.object({
+  "id": zod.number(),
+  "utcDate": zod.string(),
+  "status": zod.string(),
+  "matchday": zod.number().nullish(),
+  "stage": zod.string().optional(),
+  "minute": zod.number().nullish(),
+  "injuryTime": zod.number().nullish(),
+  "competition": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string()
+}),
+  "homeTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "awayTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "score": zod.object({
+  "winner": zod.string().nullish(),
+  "duration": zod.string().optional(),
+  "fullTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+}),
+  "halfTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+})
+}),
+  "goals": zod.array(zod.object({
+  "minute": zod.number(),
+  "injuryTime": zod.number().nullish(),
+  "team": zod.string(),
+  "scorer": zod.string(),
+  "assist": zod.string().nullish(),
+  "type": zod.string().optional()
+})).optional(),
+  "referees": zod.array(zod.object({
+  "name": zod.string().optional(),
+  "nationality": zod.string().nullish()
+})).optional()
+})
 
 
 /**
  * @summary Get head-to-head stats for a match
  */
+export const GetMatchH2HParams = zod.object({
+  "id": zod.coerce.number()
+})
 
-export function useGetMatchH2H<TData = Awaited<ReturnType<typeof getMatchH2H>>, TError = ErrorType<unknown>>(
- id: number,
-    params?: GetMatchH2HParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMatchH2H>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const GetMatchH2HQueryParams = zod.object({
+  "limit": zod.coerce.number().optional()
+})
 
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetMatchH2HQueryOptions(id,params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
+export const GetMatchH2HResponse = zod.object({
+  "aggregates": zod.object({
+  "numberOfMatches": zod.number().optional(),
+  "totalGoals": zod.number().optional(),
+  "homeTeam": zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "wins": zod.number().optional(),
+  "draws": zod.number().optional(),
+  "losses": zod.number().optional()
+}).optional(),
+  "awayTeam": zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "wins": zod.number().optional(),
+  "draws": zod.number().optional(),
+  "losses": zod.number().optional()
+}).optional()
+}),
+  "matches": zod.array(zod.object({
+  "id": zod.number(),
+  "utcDate": zod.string(),
+  "status": zod.string(),
+  "matchday": zod.number().nullish(),
+  "stage": zod.string().optional(),
+  "minute": zod.number().nullish(),
+  "injuryTime": zod.number().nullish(),
+  "competition": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "code": zod.string()
+}),
+  "homeTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "awayTeam": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "shortName": zod.string(),
+  "tla": zod.string()
+}),
+  "score": zod.object({
+  "winner": zod.string().nullish(),
+  "duration": zod.string().optional(),
+  "fullTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+}),
+  "halfTime": zod.object({
+  "home": zod.number().nullish(),
+  "away": zod.number().nullish()
+})
+})
+}))
+})
 
 
